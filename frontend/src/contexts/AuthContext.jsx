@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { connectSocket , disconnectSocket} from '../services/socket';
 
 const AuthContext = createContext();
 
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
       { withCredentials: true }
     );
     setUser(res.data.user);
+    connectSocket();
     return res.data.user;
   };
 
@@ -42,12 +44,14 @@ export const AuthProvider = ({ children }) => {
       { withCredentials: true }
     );
     setUser(res.data.user);
+    connectSocket();
     return res.data.user;
   };
 
   const logout = async () => {
     await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
     setUser(null);
+    disconnectSocket();
     window.location.href = '/auth';
   };
 
