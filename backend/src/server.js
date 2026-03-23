@@ -36,6 +36,8 @@ app.get("/api/test", protect, (req, res) => {
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 
+app.use('/api/users', require('./routes/userRoutes'));
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });

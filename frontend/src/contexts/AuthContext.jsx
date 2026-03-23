@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       data,
       { withCredentials: true }
     );
-    setUser(res.data.user);
+    setUser(res.data.user);    
     connectSocket();
     return res.data.user;
   };

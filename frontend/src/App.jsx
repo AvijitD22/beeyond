@@ -6,11 +6,9 @@ import ProductsPage from "./pages/Customer/ProductsPage";
 import OrdersPage from "./pages/Customer/OrdersPage";
 import AvailableOrders from "./pages/Delivery/AvailableOrders";
 import MyActiveOrders from "./pages/Delivery/MyActiveOrders";
-
-// Placeholder pages (we'll build real ones later)
-const CustomerDashboard = () => <h1>Customer Orders Dashboard</h1>;
-const DeliveryAvailable = () => <h1>Available Orders for Delivery Partners</h1>;
-const AdminOrders = () => <h1>Admin - All Orders Overview</h1>;
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AllOrders from "./pages/Admin/AllOrders";
+import AllUsers from "./pages/Admin/AllUsers";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -56,7 +54,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/delivery/*"
         element={
@@ -70,13 +67,18 @@ function App() {
           </ProtectedRoute>
         }
       />
+      // Add to protected admin routes
       <Route
         path="/admin/*"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <Routes>
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="*" element={<Navigate to="orders" replace />} />
+              <Route path="/" element={<AdminDashboard />}>
+                <Route index element={<AllOrders />} /> {/* default */}
+                <Route path="orders" element={<AllOrders />} />
+                <Route path="users" element={<AllUsers />} />
+                <Route path="*" element={<Navigate to="orders" replace />} />
+              </Route>
             </Routes>
           </ProtectedRoute>
         }

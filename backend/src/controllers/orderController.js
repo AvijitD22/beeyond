@@ -46,6 +46,14 @@ const placeOrder = async (req, res) => {
       status: "pending",
     });
 
+    io.emit("new-order", {
+      _id: order._id,
+      customer: { name: req.user.name }, // minimal
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt,
+    });
+
     res.status(201).json({
       message: "Order placed successfully",
       orderId: order._id,
@@ -244,6 +252,31 @@ const getMyActiveOrders = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "customer",
+        select: "name email phone",
+      })
+      .populate({
+        path: "deliveryPartner",
+        select: "name email phone",
+      })
+      .populate({
+        path: "items.product",
+        select: "name price imageUrl",
+      })
+      .lean();
+
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch all orders" });
+  }
+};
+
 module.exports = {
   placeOrder,
   getMyOrders,
@@ -251,4 +284,5 @@ module.exports = {
   acceptOrder,
   updateOrderStatus,
   getMyActiveOrders,
+  getAllOrders,
 };

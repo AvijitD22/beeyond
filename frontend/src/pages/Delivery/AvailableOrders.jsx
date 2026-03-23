@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { connectSocket } from "../../services/socket";
 
 export default function AvailableOrders() {
@@ -98,122 +98,113 @@ export default function AvailableOrders() {
     return <div style={{ padding: "40px", color: "red" }}>{error}</div>;
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-        }}
-      >
-        <h1>Available Orders</h1>
-        <button
-          onClick={fetchAvailableOrders}
-          style={{
-            padding: "8px 16px",
-            background: "#6c757d",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          Refresh
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+  {/* Heading */}
+  <h1 className="text-xl md:text-3xl font-semibold">
+    🚚 Available Orders
+  </h1>
 
-      {orders.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "80px 20px",
-            background: "#f8f9fa",
-            borderRadius: "8px",
-          }}
-        >
-          <h3>No pending orders right now</h3>
-          <p>
-            New orders will appear here automatically (refresh or wait for
-            real-time later)
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {orders.map((order) => (
-            <div
-              key={order._id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                padding: "20px",
-                background: "#fff",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              }}
-            >
+  {/* Actions */}
+  <div className="flex items-center justify-between w-full md:w-auto gap-3">
+    <Link
+      to="/delivery/my-orders"
+      className="flex-1 md:flex-none text-center px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition"
+    >
+      My Active Orders
+    </Link>
+
+    <button
+      onClick={fetchAvailableOrders}
+      className="flex-1 md:flex-none px-4 py-2 bg-white border rounded-lg text-sm hover:bg-gray-100 transition"
+    >
+      Refresh
+    </button>
+  </div>
+</div>
+
+        {/* Empty State */}
+        {orders.length === 0 ? (
+          <div className="text-center bg-white rounded-xl shadow-sm p-10">
+            <div className="text-5xl mb-3">📭</div>
+            <h3 className="text-lg font-medium">No orders available</h3>
+            <p className="text-gray-500 mt-2">
+              New orders will appear here automatically
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {orders.map((order) => (
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
-                }}
+                key={order._id}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-5"
               >
-                <strong>Order #{order._id.slice(-8).toUpperCase()}</strong>
-                <span style={{ color: "#ffc107", fontWeight: "bold" }}>
-                  PENDING
-                </span>
-              </div>
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Order #{order._id.slice(-6).toUpperCase()}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleTimeString("en-IN")}
+                    </p>
+                  </div>
 
-              <div style={{ margin: "12px 0" }}>
-                <strong>Items:</strong>
-                <ul style={{ paddingLeft: "20px", margin: "8px 0" }}>
+                  <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium">
+                    Pending
+                  </span>
+                </div>
+
+                {/* Customer + Address */}
+                <div className="mt-4 bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium">
+                    👤 {order.customer?.name || "Customer"}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    📍 {order.address}
+                  </p>
+                </div>
+
+                {/* Items */}
+                <div className="mt-4 space-y-2 text-sm">
                   {order.items.map((item, idx) => (
-                    <li key={idx}>
-                      {item.quantity} × {item.product?.name || "Item"}
-                      <span style={{ float: "right" }}>
-                        ₹{(item.price * item.quantity).toFixed(2)}
+                    <div key={idx} className="flex justify-between">
+                      <span>
+                        {item.quantity} × {item.product?.name || "Item"}
                       </span>
-                    </li>
+                      <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
 
-              <div style={{ margin: "12px 0", color: "#555" }}>
-                Customer: {order.customer?.name || "Customer"} • {order.address}
-              </div>
+                {/* Footer */}
+                <div className="mt-4 border-t pt-3 flex justify-between items-center">
+                  <p className="text-gray-500 text-sm">Total</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    ₹{order.totalAmount.toFixed(2)}
+                  </p>
+                </div>
 
-              <div
-                style={{
-                  borderTop: "1px solid #eee",
-                  paddingTop: "16px",
-                  marginTop: "16px",
-                  fontWeight: "bold",
-                }}
-              >
-                Total: ₹{order.totalAmount.toFixed(2)}
+                {/* Accept Button */}
+                <button
+                  onClick={() => handleAccept(order._id)}
+                  disabled={acceptingId === order._id}
+                  className={`w-full mt-4 py-2.5 rounded-lg font-medium transition 
+                ${
+                  acceptingId === order._id
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
+                >
+                  {acceptingId === order._id ? "Accepting..." : "Accept Order"}
+                </button>
               </div>
-
-              <button
-                onClick={() => handleAccept(order._id)}
-                disabled={acceptingId === order._id}
-                style={{
-                  marginTop: "16px",
-                  padding: "12px 28px",
-                  background: acceptingId === order._id ? "#ccc" : "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontSize: "16px",
-                  cursor: acceptingId === order._id ? "not-allowed" : "pointer",
-                  width: "100%",
-                }}
-              >
-                {acceptingId === order._id ? "Accepting..." : "Accept Order"}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
