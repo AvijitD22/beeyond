@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import API_BASE_URL from "../../config/api";
+
+
 
 export default function MyActiveOrders() {
   const { user } = useAuth();
@@ -24,7 +27,7 @@ export default function MyActiveOrders() {
     try {
       setLoading(true);
       const res = await axios.get(
-        "http://localhost:5000/api/orders/my-active",
+        `${API_BASE_URL}/api/orders/my-active`,
         {
           withCredentials: true,
         },
@@ -44,7 +47,7 @@ export default function MyActiveOrders() {
     setUpdatingId(orderId);
     try {
       await axios.patch(
-        `http://localhost:5000/api/orders/${orderId}/status`,
+        `${API_BASE_URL}/api/orders/${orderId}/status`,
         { status: newStatus },
         { withCredentials: true },
       );

@@ -1,11 +1,12 @@
 import { io } from 'socket.io-client';
+import API_BASE_URL from "../config/api";
 
 let socket;
 
 export const connectSocket = () => {
   if (socket) return socket;
 
-  socket = io('http://localhost:5000', {
+  socket = io(`${API_BASE_URL}/socket`, {
     withCredentials: true,
     // ❌ DO NOT force websocket
   });

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { connectSocket , disconnectSocket} from '../services/socket';
+import API_BASE_URL from "../config/api";
+
 
 const AuthContext = createContext();
 
@@ -11,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   // Check if already logged in (cookie exists → backend can tell us who)
   const checkAuth = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/auth/me', {
+      const res = await axios.get(`${API_BASE_URL}/api/auth/me`, {
         withCredentials: true,
       });
       setUser(res.data.user);
@@ -28,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await axios.post(
-      'http://localhost:5000/api/auth/login',
+      `${API_BASE_URL}/api/auth/login`,
       { email, password },
       { withCredentials: true }
     );
@@ -39,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (data) => {
     const res = await axios.post(
-      'http://localhost:5000/api/auth/register',
+      `${API_BASE_URL}/api/auth/register`,
       data,
       { withCredentials: true }
     );
@@ -49,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+    await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
     setUser(null);
     disconnectSocket();
     window.location.href = '/auth';

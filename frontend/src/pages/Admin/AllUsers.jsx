@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE_URL from "../../config/api";
+
 
 export default function AllUsers() {
   const [users, setUsers] = useState([]);
@@ -13,7 +15,7 @@ export default function AllUsers() {
   const fetchUsers = async () => {
     try {
       const url = roleFilter ? `/api/users?role=${roleFilter}` : "/api/users";
-      const res = await axios.get(`http://localhost:5000${url}`, {
+      const res = await axios.get(`${API_BASE_URL}${url}`, {
         withCredentials: true,
       });
       setUsers(res.data);

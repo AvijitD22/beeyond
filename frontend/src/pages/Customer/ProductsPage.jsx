@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import API_BASE_URL from "../../config/api";
+
+
+
 export default function ProductsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -19,7 +23,7 @@ export default function ProductsPage() {
 
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/products", {
+        const res = await axios.get(`${API_BASE_URL}/api/products`, {
           withCredentials: true,
         });
         setProducts(res.data);
@@ -61,7 +65,7 @@ export default function ProductsPage() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/orders",
+        `${API_BASE_URL}/api/orders`,
         { items, address: "Pune, Home" },
         { withCredentials: true },
       );

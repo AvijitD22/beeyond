@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { connectSocket } from "../../services/socket";
+import API_BASE_URL from "../../config/api";
+
 
 export default function AllOrders() {
   const [orders, setOrders] = useState([]);
@@ -33,7 +35,7 @@ export default function AllOrders() {
 
   const fetchAllOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/orders/all", {
+      const res = await axios.get(`${API_BASE_URL}/api/orders/all`, {
         withCredentials: true,
       });
       setOrders(res.data);

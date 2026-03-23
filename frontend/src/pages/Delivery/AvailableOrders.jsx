@@ -4,6 +4,9 @@ import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { connectSocket } from "../../services/socket";
+import API_BASE_URL from "../../config/api";
+
+
 
 export default function AvailableOrders() {
   const { user } = useAuth();
@@ -44,7 +47,7 @@ export default function AvailableOrders() {
     try {
       setLoading(true);
       const res = await axios.get(
-        "http://localhost:5000/api/orders/available",
+        `${API_BASE_URL}/api/orders/available`,
         {
           withCredentials: true,
         },
@@ -66,7 +69,7 @@ export default function AvailableOrders() {
     setAcceptingId(orderId);
     try {
       const res = await axios.patch(
-        `http://localhost:5000/api/orders/${orderId}/accept`,
+        `${API_BASE_URL}/api/orders/${orderId}/accept`,
         {},
         { withCredentials: true },
       );

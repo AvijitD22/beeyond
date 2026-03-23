@@ -4,6 +4,9 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../../services/socket";
 import { Link } from "react-router-dom";
+import API_BASE_URL from "../../config/api";
+
+
 
 const STATUS_FLOW = [
   "pending",
@@ -32,7 +35,7 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/orders/my", {
+        const res = await axios.get(`${API_BASE_URL}/api/orders/my`, {
           withCredentials: true,
         });
         setOrders(res.data);
