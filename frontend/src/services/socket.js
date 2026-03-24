@@ -6,7 +6,7 @@ let socket;
 export const connectSocket = () => {
   if (socket) return socket;
 
-  socket = io(`${API_BASE_URL}/socket`, {
+  socket = io(`${API_BASE_URL}`, {
     withCredentials: true,
     // ❌ DO NOT force websocket
   });
