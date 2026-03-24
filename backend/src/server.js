@@ -13,12 +13,13 @@ const { Server } = require("socket.io");
 
 const app = express();
 
+const allowedOrigin = "http://localhost:5173"; // Change this to your frontend URL
+
 // Middleware
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: allowedOrigin,
   }),
 );
 app.use(express.json());
@@ -38,7 +39,7 @@ app.use("/api/orders", require("./routes/orderRoutes"));
 
 app.use('/api/users', require('./routes/userRoutes'));
 
-app.get("/health", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
@@ -50,7 +51,7 @@ const server = http.createServer(app);
 // ✅ Attach socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: allowedOrigin,
     methods: ["GET", "POST"],
     credentials: true,
   },
