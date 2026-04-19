@@ -17,14 +17,24 @@ export default function AllOrders() {
     socket.on("order-updated", (data) => {
       setOrders((prev) =>
         prev.map((o) =>
-          o._id === data.orderId ? { ...o, status: data.status } : o,
+          o._id === data.orderId 
+            ? { 
+                ...o, 
+                status: data.status,
+                // update deliveryPartner data when it arrives via socket
+                deliveryPartner: data.deliveryPartner || o.deliveryPartner
+              } 
+            : o,
         ),
       );
     });
 
     socket.on("new-order", (newOrder) => {
-      // we'll emit this later when order placed
-      setOrders((prev) => [newOrder, ...prev]);
+      setOrders((prev) => {
+        // Prevent duplicate orders
+        if (prev.some((o) => o._id === newOrder._id)) return prev;
+        return [newOrder, ...prev];
+      });
     });
 
     return () => {

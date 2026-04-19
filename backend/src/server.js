@@ -17,11 +17,7 @@ const allowedOrigin = "http://localhost:5173"; // Change this to your frontend U
 
 // Middleware
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: allowedOrigin,
-  }),
-);
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
 
 // Connect to DB

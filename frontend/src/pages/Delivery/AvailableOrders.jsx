@@ -35,11 +35,21 @@ export default function AvailableOrders() {
       setOrders((prev) => prev.filter((o) => o._id !== orderId));
     };
 
+    const handleNewOrder = (newOrder) => {
+      setOrders((prev) => {
+        // Prevent duplicate orders
+        if (prev.some((o) => o._id === newOrder._id)) return prev;
+        return [newOrder, ...prev];
+      });
+    };
+
     socket.on("order-accepted", handleOrderAccepted);
+    socket.on("new-order", handleNewOrder);
 
     // ✅ Cleanup (VERY IMPORTANT)
     return () => {
       socket.off("order-accepted", handleOrderAccepted);
+      socket.off("new-order", handleNewOrder);
     };
   }, [user, navigate]);
 

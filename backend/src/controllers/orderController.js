@@ -40,11 +40,23 @@ const placeOrder = async (req, res) => {
       address: address || "Default Location",
     });
 
-    //emit socket event "new-pending-order"
-    io.to("delivery").emit("new-order", {
-      orderId: order._id,
-      status: "pending",
-    });
+    // Fetch the populated order to push full details to delivery drivers
+    const populatedOrder = await Order.findById(order._id)
+      .populate({
+        path: "items.product",
+        select: "name price imageUrl",
+      })
+      .populate({
+        path: "customer",
+        select: "name phone",
+      })
+      .lean();
+
+    //emit socket event "new-order" with fully populated order to the delivery room
+    io.to("delivery").emit("new-order", populatedOrder);
+    
+    // Admin also receives the fully populated payload
+    io.to("admin").emit("new-order", populatedOrder);
 
     io.emit("new-order", {
       _id: order._id,
@@ -139,7 +151,17 @@ const acceptOrder = async (req, res) => {
       status: "accepted",
     });
 
-    // TODO: Later emit socket.io event: "order-accepted" or "order-updated"
+    // Emit to delivery group so it removes from other drivers' available list
+    io.to("delivery").emit("order-accepted", {
+      orderId: order._id
+    });
+
+    // Emit to admin group to visually update the status and assigned delivery partner
+    io.to("admin").emit("order-updated", {
+      orderId: order._id,
+      status: "accepted",
+      deliveryPartner: { name: req.user.name }
+    });
 
     res.json({
       message: "Order accepted successfully",
@@ -212,7 +234,8 @@ const updateOrderStatus = async (req, res) => {
     // ALSO send to user room (IMPORTANT)
     io.to(`user:${order.customer}`).emit("order-updated", payload);
 
-    // TODO: Later here → io.emit or io.to(`order:${orderId}`).emit('order-updated', updatedOrder)
+    // ALSO send to admin room
+    io.to("admin").emit("order-updated", payload);
 
     res.json({
       message: `Order status updated to ${status}`,
