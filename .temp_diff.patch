@@ -1,0 +1,157 @@
+diff --git a/backend/src/controllers/orderController.js b/backend/src/controllers/orderController.js
+index 3b95f2e..a118e71 100644
+--- a/backend/src/controllers/orderController.js
++++ b/backend/src/controllers/orderController.js
+@@ -40,11 +40,23 @@ const placeOrder = async (req, res) => {
+       address: address || "Default Location",
+     });
+ 
+-    //emit socket event "new-pending-order"
+-    io.to("delivery").emit("new-order", {
+-      orderId: order._id,
+-      status: "pending",
+-    });
++    // Fetch the populated order to push full details to delivery drivers
++    const populatedOrder = await Order.findById(order._id)
++      .populate({
++        path: "items.product",
++        select: "name price imageUrl",
++      })
++      .populate({
++        path: "customer",
++        select: "name phone",
++      })
++      .lean();
++
++    //emit socket event "new-order" with fully populated order to the delivery room
++    io.to("delivery").emit("new-order", populatedOrder);
++    
++    // Admin also receives the fully populated payload
++    io.to("admin").emit("new-order", populatedOrder);
+ 
+     io.emit("new-order", {
+       _id: order._id,
+@@ -139,7 +151,17 @@ const acceptOrder = async (req, res) => {
+       status: "accepted",
+     });
+ 
+-    // TODO: Later emit socket.io event: "order-accepted" or "order-updated"
++    // Emit to delivery group so it removes from other drivers' available list
++    io.to("delivery").emit("order-accepted", {
++      orderId: order._id
++    });
++
++    // Emit to admin group to visually update the status and assigned delivery partner
++    io.to("admin").emit("order-updated", {
++      orderId: order._id,
++      status: "accepted",
++      deliveryPartner: { name: req.user.name }
++    });
+ 
+     res.json({
+       message: "Order accepted successfully",
+@@ -212,7 +234,8 @@ const updateOrderStatus = async (req, res) => {
+     // ALSO send to user room (IMPORTANT)
+     io.to(`user:${order.customer}`).emit("order-updated", payload);
+ 
+-    // TODO: Later here → io.emit or io.to(`order:${orderId}`).emit('order-updated', updatedOrder)
++    // ALSO send to admin room
++    io.to("admin").emit("order-updated", payload);
+ 
+     res.json({
+       message: `Order status updated to ${status}`,
+diff --git a/backend/src/server.js b/backend/src/server.js
+index 26eb198..d539402 100644
+--- a/backend/src/server.js
++++ b/backend/src/server.js
+@@ -17,11 +17,7 @@ const allowedOrigin = "http://localhost:5173"; // Change this to your frontend U
+ 
+ // Middleware
+ app.use(cookieParser());
+-app.use(
+-  cors({
+-    origin: allowedOrigin,
+-  }),
+-);
++app.use(cors({ origin: allowedOrigin, credentials: true }));
+ app.use(express.json());
+ 
+ // Connect to DB
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index db25a39..42e647a 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -2949,6 +2949,7 @@
+       "integrity": "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==",
+       "dev": true,
+       "license": "MIT",
++      "peer": true,
+       "engines": {
+         "node": ">=12"
+       },
+@@ -3856,7 +3857,6 @@
+       "integrity": "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg==",
+       "dev": true,
+       "license": "ISC",
+-      "peer": true,
+       "bin": {
+         "yaml": "bin.mjs"
+       },
+diff --git a/frontend/src/pages/Admin/AllOrders.jsx b/frontend/src/pages/Admin/AllOrders.jsx
+index 19da2b0..f2325de 100644
+--- a/frontend/src/pages/Admin/AllOrders.jsx
++++ b/frontend/src/pages/Admin/AllOrders.jsx
+@@ -17,14 +17,24 @@ export default function AllOrders() {
+     socket.on("order-updated", (data) => {
+       setOrders((prev) =>
+         prev.map((o) =>
+-          o._id === data.orderId ? { ...o, status: data.status } : o,
++          o._id === data.orderId 
++            ? { 
++                ...o, 
++                status: data.status,
++                // update deliveryPartner data when it arrives via socket
++                deliveryPartner: data.deliveryPartner || o.deliveryPartner
++              } 
++            : o,
+         ),
+       );
+     });
+ 
+     socket.on("new-order", (newOrder) => {
+-      // we'll emit this later when order placed
+-      setOrders((prev) => [newOrder, ...prev]);
++      setOrders((prev) => {
++        // Prevent duplicate orders
++        if (prev.some((o) => o._id === newOrder._id)) return prev;
++        return [newOrder, ...prev];
++      });
+     });
+ 
+     return () => {
+diff --git a/frontend/src/pages/Delivery/AvailableOrders.jsx b/frontend/src/pages/Delivery/AvailableOrders.jsx
+index 7d73ce4..43dec36 100644
+--- a/frontend/src/pages/Delivery/AvailableOrders.jsx
++++ b/frontend/src/pages/Delivery/AvailableOrders.jsx
+@@ -35,11 +35,21 @@ export default function AvailableOrders() {
+       setOrders((prev) => prev.filter((o) => o._id !== orderId));
+     };
+ 
++    const handleNewOrder = (newOrder) => {
++      setOrders((prev) => {
++        // Prevent duplicate orders
++        if (prev.some((o) => o._id === newOrder._id)) return prev;
++        return [newOrder, ...prev];
++      });
++    };
++
+     socket.on("order-accepted", handleOrderAccepted);
++    socket.on("new-order", handleNewOrder);
+ 
+     // ✅ Cleanup (VERY IMPORTANT)
+     return () => {
+       socket.off("order-accepted", handleOrderAccepted);
++      socket.off("new-order", handleNewOrder);
+     };
+   }, [user, navigate]);
+ 
